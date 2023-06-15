@@ -1,16 +1,17 @@
-# import necessary libraries
-import tensorflow_hub as hub
+from sentence_transformers import SentenceTransformer
+sbert_model = SentenceTransformer('bert-base-nli-mean-tokens')
+
 import pandas as pd
 import ast  # for converting embeddings saved as strings back to arrays
 import openai  # for calling the OpenAI API
 import tiktoken  # for counting tokens
 from scipy import spatial  # for calculating vector similarities for search
 # Load pre-trained universal sentence encoder model
-
+import numpy as np
 
 import os
-api_key="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"
-api_key="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"
+api_key="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"
+api_key="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"
 os.environ["OPENAI_API_KEY"] = api_key
 os.environ['OPENAI_API_KEY'].split(os.pathsep)
 openai.api_key=api_key
@@ -18,38 +19,21 @@ openai.api_key=api_key
 EMBEDDING_MODEL = "text-embedding-ada-002"
 GPT_MODEL = "gpt-3.5-turbo"
 
-query = "What is the name of the Author of Alice’s Adventures in Wonderland?"
-
-response = openai.ChatCompletion.create(
-    messages=[
-        {'role': 'system', 'content': 'You answer questions about the Alice’s Adventures in Wonderland.'},
-        {'role': 'user', 'content': query},
-    ],
-    model=GPT_MODEL,
-    temperature=0,
-)
-
-#print(response['choices'][0]['message']['content'])
-
-
-
-# Sentences for which you want to create embeddings,
-# passed as an array in embed()
-embed = hub.load("tensor")
-file = open("alice.txt",encoding="utf8")
+file = open("EXL_Reports_2023.txt")
 s=file.readlines()
 lines=[]
 # Replaces escape character with space
 for l in s:
 
 
-    l=l.replace("\n", " ")
-    if l!=" ":
-        lines.append(l)
+    l=l.replace("\n", " ").strip()
 
+    
+    lines.append(l)
+ln=len(lines)
 
-embeddings = embed(lines)
-#print(type(embeddings))
+embeddings = sbert_model.encode(lines)
+
 myDict={"text":[],"embedding":[]}
 
 # Printing embeddings of each sentence
@@ -59,16 +43,18 @@ myDict={"text":[],"embedding":[]}
 for i in range(len(lines)):
 
     myDict["text"].append(lines[i])
-    myDict["embedding"].append(embeddings[i].numpy())
+    myDict["embedding"].append(embeddings[i])
 
 df=pd.DataFrame(myDict)
-print(df.head(2))
+#df.to_csv("EXL_Embeddings.csv")
+#print(df.head(2))
+
 
 def strings_ranked_by_relatedness(
     query: str,
     df: pd.DataFrame,
     relatedness_fn=lambda x, y: 1 - spatial.distance.cosine(x, y),
-    top_n: int = 100
+    top_n: int = 5
 ) -> tuple[list[str], list[float]]:
     """Returns a list of strings and relatednesses, sorted from most related to least."""
     #query_embedding_response = openai.Embedding.create(
@@ -76,28 +62,20 @@ def strings_ranked_by_relatedness(
         #input=query,
     #)
     #query_embedding = query_embedding_response["data"][0]["embedding"]
-    query_embedding=embed(query)
+    query_embedding=sbert_model.encode(query)
     strings_and_relatednesses = [
-        (row["text"], relatedness_fn(query_embedding.numpy()[0], row["embedding"]))
+        (row["text"], relatedness_fn(query_embedding[0], row["embedding"]))
         for i, row in df.iterrows()
     ]
     strings_and_relatednesses.sort(key=lambda x: x[1], reverse=True)
+    #print(strings_and_relatednesses)
     strings, relatednesses = zip(*strings_and_relatednesses)
     return strings[:top_n], relatednesses[:top_n]
-
-#strings, relatednesses = strings_ranked_by_relatedness(["Alice’s Adventures in Wonderland"], df, top_n=5)
-#query_embedding=embed(["Alice"])
-#print(query_embedding.numpy()[0])
-#for string, relatedness in zip(strings, relatednesses):
-    #print(f"{relatedness=:.3f}")
-    #print(string)
-
 
 def num_tokens(text: str, model: str = GPT_MODEL) -> int:
     """Return the number of tokens in a string."""
     encoding = tiktoken.encoding_for_model(model)
     return len(encoding.encode(text))
-
 
 def query_message(
     query: str,
@@ -107,11 +85,24 @@ def query_message(
 ) -> str:
     """Return a message for GPT, with relevant source texts pulled from a dataframe."""
     strings, relatednesses = strings_ranked_by_relatedness(query, df)
-    introduction = 'Use the below articles on Alice’s Adventures in Wonderland to answer the subsequent question. If the answer cannot be found in the articles, write "I could not find an answer."'
+    introduction = 'Use the below articles on EXL Financial Reports to answer the subsequent question. If the answer cannot be found in the articles, write "I could not find an answer."'
     question = f"\n\nQuestion: {query}"
     message = introduction
     for string in strings:
-        next_article = f'\n\nWikipedia article section:\n"""\n{string}\n"""'
+        section=string
+        i=0        
+        while i<len(lines):            
+            if lines[i]==string:               
+                i+=1                
+                if i<len(lines)-1:                    
+                    while lines[i]!='' :
+                        string=string+lines[i]
+                        i+=1
+                        if i==len(lines):
+                            break
+            i+=1
+                
+        next_article = f'\n\n"""\n{string}\n"""'
         if (
             num_tokens(message + next_article + question, model=model)
             > token_budget
@@ -120,6 +111,7 @@ def query_message(
         else:
             message += next_article
     return message + question
+
 
 
 def ask(
@@ -134,7 +126,7 @@ def ask(
     if print_message:
         print(message)
     messages = [
-        {"role": "system", "content": "You answer questions about Alice’s Adventures in Wonderland."},
+        {"role": "system", "content": "You answer questions about EXL Financial Reports 2023."},
         {"role": "user", "content": message},
     ]
     response = openai.ChatCompletion.create(
@@ -146,4 +138,4 @@ def ask(
     return response_message
 
 
-print(ask(["What is the name of the Author?"]))
+#print(ask(["what is the business highlights of 2023?"]))
