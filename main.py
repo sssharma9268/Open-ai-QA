@@ -39,10 +39,3 @@ def askQuestions():
 if __name__ == '__main__':
     app.run()
 
-# lines=[]
-#,encoding="ISO-8859-1"
-# with open("EXL_Reports_2023.txt","r") as f:
-    
-#     lines = f.readlines()
-
-# print(lines)
