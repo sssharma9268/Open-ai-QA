@@ -10,8 +10,8 @@ from scipy import spatial  # for calculating vector similarities for search
 import numpy as np
 
 import os
-api_key="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"
-api_key="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"
+api_key="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"
+api_key="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"
 os.environ["OPENAI_API_KEY"] = api_key
 os.environ['OPENAI_API_KEY'].split(os.pathsep)
 openai.api_key=api_key
@@ -19,7 +19,7 @@ openai.api_key=api_key
 EMBEDDING_MODEL = "text-embedding-ada-002"
 GPT_MODEL = "gpt-3.5-turbo"
 
-file = open("EXL_Reports_2023.txt")
+file = open("EXL_Reports_2023.txt",encoding="ISO-8859-1")
 s=file.readlines()
 lines=[]
 # Replaces escape character with space
