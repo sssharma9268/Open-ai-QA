@@ -10,10 +10,9 @@ from scipy import spatial  # for calculating vector similarities for search
 import numpy as np
 
 import os
-api_key="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"
-api_key="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"
-os.environ["OPENAI_API_KEY"] = api_key
-os.environ['OPENAI_API_KEY'].split(os.pathsep)
+api_key=os.getenv["KEY"]
+#os.environ["OPENAI_API_KEY"] = api_key
+#os.environ['OPENAI_API_KEY'].split(os.pathsep)
 openai.api_key=api_key
 # models
 EMBEDDING_MODEL = "text-embedding-ada-002"
