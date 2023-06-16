@@ -1,3 +1,4 @@
+import logging
 from sentence_transformers import SentenceTransformer
 sbert_model = SentenceTransformer('bert-base-nli-mean-tokens')
 
@@ -10,9 +11,9 @@ from scipy import spatial  # for calculating vector similarities for search
 import numpy as np
 
 import os
-log.info(os.environ.get['openapikey'])
+logging.info(os.environ.get['openapikey'])
 api_key=os.environ.get['openapikey']
-log.info(api_key)
+logging.info(api_key)
 #os.environ["OPENAI_API_KEY"] = api_key
 #os.environ['OPENAI_API_KEY'].split(os.pathsep)
 openai.api_key=api_key
