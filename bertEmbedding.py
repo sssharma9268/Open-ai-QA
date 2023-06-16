@@ -10,7 +10,7 @@ from scipy import spatial  # for calculating vector similarities for search
 import numpy as np
 
 import os
-api_key=os.getenv["KEY"]
+api_key=os.environ['KEY']
 #os.environ["OPENAI_API_KEY"] = api_key
 #os.environ['OPENAI_API_KEY'].split(os.pathsep)
 openai.api_key=api_key
