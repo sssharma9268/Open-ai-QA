@@ -11,8 +11,10 @@ from scipy import spatial  # for calculating vector similarities for search
 import numpy as np
 
 import os
-logging.info(os.environ.get['openapikey'])
-api_key=os.environ.get['openapikey']
+#os.environ["openapikey"] = "asdasdasfas"
+logging.info(os.environ['openapikey'])
+#print(os.environ['openapikey'])
+api_key=os.environ['openapikey']
 logging.info(api_key)
 #os.environ["OPENAI_API_KEY"] = api_key
 #os.environ['OPENAI_API_KEY'].split(os.pathsep)
