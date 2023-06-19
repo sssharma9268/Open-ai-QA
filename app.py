@@ -1,9 +1,10 @@
 import fitz
 import bertEmbedding
 from flask import *
+import os
 
 app = Flask(__name__)
-
+#os.environ["PORT"] = "5000"
 
 @app.route('/')
 def index():
@@ -37,4 +38,6 @@ def askQuestions():
 
 
 if __name__ == '__main__':
-    app.run()
+    port=int(os.environ["PORT"])
+    print(port)
+    app.run(debug=True,host="0.0.0.0",port=port)
