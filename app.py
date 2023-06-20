@@ -12,19 +12,19 @@ def index():
 
 @app.route("/upload",methods=["POST"])
 def upload():
-    uploaded_files = flask.request.files.getlist("files[]")
-    processFiles(uploaded_files)
+    uploaded_file = request.files['files']
+    processFiles(uploaded_file.filename)
     print("Files Uploaded")
     return "Success"
 
-def processFiles(files):
-    for file in files:    
-        with fitz.open(file) as doc:
-            for page in doc:
-                text = page.get_text()
-                with open("./TextFile.txt", "a") as f:
-                    f.writelines(text)
-                f.close()
+def processFiles(filename):      
+    with fitz.open(filename) as doc:
+        for page in doc:
+            text = page.get_text()
+            print("text---->"+text)
+            with open("./TextFiles/TextFile.txt", "a") as f:
+                f.writelines(text)
+            f.close()
 
 @app.route('/askQuestion',methods=['POST'])
 def askQuestions():
@@ -34,7 +34,7 @@ def askQuestions():
     questions_list.append(questions)
     answer=bertEmbedding.ask(questions_list)
     print(questions)
-    return "This is your question-"+questions+"and answer:--/n"+answer
+    return answer
 
 
 if __name__ == '__main__':
