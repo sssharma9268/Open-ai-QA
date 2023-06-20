@@ -3,6 +3,7 @@ import bertEmbedding
 from flask import *
 import os
 from flask_cors import CORS
+import glob
 
 app = Flask(__name__)
 CORS(app)
@@ -16,6 +17,8 @@ def index():
 @app.route("/upload",methods=["POST"])
 def upload():
     uploaded_file = request.files['files']
+    uploaded_file.save(uploaded_file.filename)
+    #print(uploaded_file.filename)
     processFiles(uploaded_file.filename)
     print("Files Uploaded")
     return "Success"
@@ -27,10 +30,14 @@ def processFiles(filename):
     with fitz.open(filename) as doc:
         for page in doc:
             text = page.get_text()
-            print("text---->"+text)
+            #print("text---->"+text)
             with open("./TextFiles/TextFile.txt", "a") as f:
                 f.writelines(text)
             f.close()
+    files=glob.glob('*.pdf')
+    print(files)
+    for filename in files:
+        os.unlink(filename)
 
 @app.route('/askQuestion',methods=['POST'])
 def askQuestions():

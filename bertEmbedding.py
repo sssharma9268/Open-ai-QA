@@ -11,7 +11,7 @@ from scipy import spatial  # for calculating vector similarities for search
 import numpy as np
 
 import os
-#os.environ["openapikey"] = "---oldkey---sk--aynEQ3OSpdlAnTmc7bNsT3BlbkFJv6EbHLufeblxJwknLeaU"
+#os.environ["openapikey"] = "--old-key--sk--aynEQ3OSpdlAnTmc7bNsT3BlbkFJv6EbHLufeblxJwknLeaU"
 logging.info(os.environ['openapikey'])
 #print(os.environ['openapikey'])
 api_key=os.environ['openapikey']
@@ -120,6 +120,7 @@ def ask(
     print_message: bool = False,
 ) -> str:
     """Answers a query using GPT and a dataframe of relevant texts and embeddings."""
+    print(df)
     message = query_message(query, df, model=model, token_budget=token_budget)
     if print_message:
         print(message)
