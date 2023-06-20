@@ -17,7 +17,10 @@ def upload():
     print("Files Uploaded")
     return "Success"
 
-def processFiles(filename):      
+def processFiles(filename):  
+    file_to_delete = open("./TextFiles/TextFile.txt",'w')
+    file_to_delete.close()
+
     with fitz.open(filename) as doc:
         for page in doc:
             text = page.get_text()
