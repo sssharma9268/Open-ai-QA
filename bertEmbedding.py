@@ -11,7 +11,7 @@ from scipy import spatial  # for calculating vector similarities for search
 import numpy as np
 
 import os
-#os.environ["openapikey"] = "--old-key--sk--aynEQ3OSpdlAnTmc7bNsT3BlbkFJv6EbHLufeblxJwknLeaU"
+#os.environ["openapikey"] = "--old-key---s-k-aynEQ3OSpdlAnTmc7bNsT3BlbkFJv6EbHLufeblxJwknLeaU"
 logging.info(os.environ['openapikey'])
 #print(os.environ['openapikey'])
 api_key=os.environ['openapikey']
@@ -22,37 +22,6 @@ openai.api_key=api_key
 # models
 EMBEDDING_MODEL = "text-embedding-ada-002"
 GPT_MODEL = "gpt-3.5-turbo"
-
-file = open("./TextFiles/TextFile.txt",encoding="ISO-8859-1")
-s=file.readlines()
-lines=[]
-# Replaces escape character with space
-for l in s:
-
-
-    l=l.replace("\n", " ").strip()
-
-    
-    lines.append(l)
-ln=len(lines)
-
-embeddings = sbert_model.encode(lines)
-
-myDict={"text":[],"embedding":[]}
-
-# Printing embeddings of each sentence
-  
-# To print each embeddings along with its corresponding 
-# sentence below code can be used.
-for i in range(len(lines)):
-
-    myDict["text"].append(lines[i])
-    myDict["embedding"].append(embeddings[i])
-
-df=pd.DataFrame(myDict)
-#df.to_csv("EXL_Embeddings.csv")
-#print(df.head(2))
-
 
 def strings_ranked_by_relatedness(
     query: str,
@@ -77,15 +46,19 @@ def num_tokens(text: str, model: str = GPT_MODEL) -> int:
 
 def query_message(
     query: str,
+    lines: list,
     df: pd.DataFrame,
     model: str,
     token_budget: int
+    
 ) -> str:
     """Return a message for GPT, with relevant source texts pulled from a dataframe."""
     strings, relatednesses = strings_ranked_by_relatedness(query, df)
     introduction = 'Use the below articles on EXL Financial Reports to answer the subsequent question. If the answer cannot be found in the articles, write "I could not find an answer."'
     question = f"\n\nQuestion: {query}"
     message = introduction
+    print("Printing lines from query message-----")
+    print(lines)
     for string in strings:
         section=string
         i=0        
@@ -114,14 +87,36 @@ def query_message(
 
 def ask(
     query: str,
-    df: pd.DataFrame = df,
     model: str = GPT_MODEL,
     token_budget: int = 4096 - 500,
     print_message: bool = False,
 ) -> str:
     """Answers a query using GPT and a dataframe of relevant texts and embeddings."""
-    print(df)
-    message = query_message(query, df, model=model, token_budget=token_budget)
+
+    file = open("./TextFiles/TextFile.txt",encoding="ISO-8859-1")
+    s=file.readlines()
+    lines=[]
+
+    for l in s:
+        l=l.replace("\n", " ").strip()    
+        lines.append(l)
+    ln=len(lines)
+
+    embeddings = sbert_model.encode(lines)
+
+    myDict={"text":[],"embedding":[]}
+
+
+    for i in range(len(lines)):
+        myDict["text"].append(lines[i])
+        myDict["embedding"].append(embeddings[i])
+
+    df=pd.DataFrame(myDict)
+    #df.to_csv("EXL_Embeddings.csv")
+    #print(df.head(2))
+
+    print(df.head(2))
+    message = query_message(query,lines, df, model=model, token_budget=token_budget)
     if print_message:
         print(message)
     messages = [
