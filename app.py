@@ -2,8 +2,11 @@ import fitz
 import bertEmbedding
 from flask import *
 import os
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+
 #os.environ["PORT"] = "5000"
 
 @app.route('/')
