@@ -1,9 +1,10 @@
 import fitz
 import bertEmbedding
-from flask import *
+from flask import Flask,request, jsonify
 import os
 from flask_cors import CORS
 import glob
+
 
 app = Flask(__name__)
 CORS(app)
@@ -17,11 +18,12 @@ def index():
 @app.route("/upload",methods=["POST"])
 def upload():
     uploaded_file = request.files['files']
+
     uploaded_file.save(uploaded_file.filename)
     #print(uploaded_file.filename)
     processFiles(uploaded_file.filename)
     print("Files Uploaded")
-    return "Success"
+    return jsonify({"success":True})
 
 def processFiles(filename):  
     file_to_delete = open("./TextFiles/TextFile.txt",'w')
@@ -47,7 +49,7 @@ def askQuestions():
     questions_list.append(questions)
     answer=bertEmbedding.ask(questions_list)
     print(questions)
-    return answer
+    return jsonify({"Answer":answer})
 
 
 if __name__ == '__main__':
