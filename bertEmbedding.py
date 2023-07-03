@@ -11,7 +11,7 @@ from scipy import spatial  # for calculating vector similarities for search
 import numpy as np
 
 import os
-#os.environ["openapikey"] = "--old-key---s-k-aynEQ3OSpdlAnTmc7bNsT3BlbkFJv6EbHLufeblxJwknLeaU"
+os.environ["openapikey"] = "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"
 logging.info(os.environ['openapikey'])
 #print(os.environ['openapikey'])
 api_key=os.environ['openapikey']
