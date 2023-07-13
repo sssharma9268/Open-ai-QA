@@ -11,24 +11,13 @@ from langchain.vectorstores import Chroma
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.llms import OpenAI
+from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
 
 app = Flask(__name__)
 CORS(app)
-global vectorDB
 
 os.environ["PORT"] = "5000"
-os.environ["OPENAI_API_KEY"] = "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"
-
-class DB:
-    
-    #Declaring a constructor, taking length and colour as a parameter
-    #Remember 'self'(object) is passed to each method
-    def __init__(self, db):
-        self.db = db
-
-    def getDB(self):
-        return self.db
-
+#os.environ["OPENAI_API_KEY"] = "---old---s-k-ceIzc6Ajx1sOqoT7QMdNT3BlbkFJUvMm7y69FCylbCAT2cQG"
 
 
 @app.route('/')
@@ -42,7 +31,7 @@ def upload():
     for file in uploaded_files:
         file.save("./MyDrive/"+file.filename)                                      
         
-    db=processFiles(uploaded_files)
+    processFiles(uploaded_files)
     
     #print("Files Uploaded")
     #files=glob.glob('*.pdf')
@@ -55,25 +44,28 @@ def upload():
 def processFiles(uploaded_files):
     loader = PyPDFDirectoryLoader("./MyDrive/")
     docs = loader.load()
-    embeddings=OpenAIEmbeddings()
-    vectordb = Chroma.from_documents(docs,embedding=embeddings)
-    db = DB(vectordb)
+    embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+    #embeddings=OpenAIEmbeddings()
+    global vectorDB
+    vectorDB = Chroma.from_documents(docs,embedding_function)
+ 
     print("Embeddings stored in vectorDB")
-    return db
+  
   
 
 @app.route('/askQuestion',methods=['POST'])
 def askQuestions():
-    db=DB()
-    vectordb = db.getDB()
+    vectordb = vectorDB
     memory = ConversationBufferMemory(memory_key="chat_history",return_messages=True)
-    pdf_qa = ConversationalRetrievalChain.from_llm(OpenAI(temperature=0.9),vectordb.as_retriever(),memory=memory)
+    pdf_qa = ConversationalRetrievalChain.from_llm(OpenAI(temperature=0),vectordb.as_retriever(),memory=memory)
     
     req_data=request.get_json()
     questions = req_data['questions']
     result = pdf_qa({"question": questions})
+    print(result)
    
-    return jsonify({"Answer":result})
+    return jsonify({"Answer":result["answer"]})
+    #return result["answer"]
 
 
 if __name__ == '__main__':
