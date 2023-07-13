@@ -1,23 +1,35 @@
-import fitz
-import bertEmbedding
-import embeddingsInRedis
 from flask import Flask,request, jsonify
 import os
 from flask_cors import CORS
-import glob
-import redis
+
 import pandas as pd
-from sentence_transformers import SentenceTransformer
-sbert_model = SentenceTransformer('bert-base-nli-mean-tokens')
-import numpy as np
-from redis.commands.search.field import VectorField, TextField
-from redis.commands.search.query import Query
-from redis.commands.search.indexDefinition import IndexDefinition, IndexType
+
+import pypdf
+from langchain.document_loaders import PyPDFDirectoryLoader
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
+from langchain.llms import OpenAI
 
 app = Flask(__name__)
 CORS(app)
+global vectorDB
 
 os.environ["PORT"] = "5000"
+os.environ["OPENAI_API_KEY"] = "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"
+
+class DB:
+    
+    #Declaring a constructor, taking length and colour as a parameter
+    #Remember 'self'(object) is passed to each method
+    def __init__(self, db):
+        self.db = db
+
+    def getDB(self):
+        return self.db
+
+
 
 @app.route('/')
 def index():
@@ -28,115 +40,40 @@ def upload():
     uploaded_files = request.files.getlist('files')
 
     for file in uploaded_files:
-        file.save(file.filename)                                      
+        file.save("./MyDrive/"+file.filename)                                      
         
-    processFiles(uploaded_files)
-    print("Files Uploaded")
-    files=glob.glob('*.pdf')
+    db=processFiles(uploaded_files)
+    
+    #print("Files Uploaded")
+    #files=glob.glob('*.pdf')
     #print(files)
-    for filename in files:
-        os.unlink(filename)
-
-    createEmbeddings(uploaded_files)
+    #for filename in files:
+        #os.unlink(filename)
    
     return jsonify({"success":True})
 
-def processFiles(uploaded_files): 
-    for file in uploaded_files:
-        fname=file.filename.split('.')[0].strip() 
-        file_to_delete = open("./TextFiles/"+fname+".txt",'w')
-        file_to_delete.close()
-    
-        print("Filename:-----"+fname)
-        with fitz.open(file.filename) as doc:
-            for page in doc:
-                text = page.get_text()
-            #print("text---->"+text)
-                with open("./TextFiles/"+fname+".txt", "a",encoding="utf-8") as f:
-                    f.writelines(text)
-                f.close()
-    print("Converted files to Text")
-    
+def processFiles(uploaded_files):
+    loader = PyPDFDirectoryLoader("./MyDrive/")
+    docs = loader.load()
+    embeddings=OpenAIEmbeddings()
+    vectordb = Chroma.from_documents(docs,embedding=embeddings)
+    db = DB(vectordb)
+    print("Embeddings stored in vectorDB")
+    return db
   
-    
-def createEmbeddings(uploaded_files):
-    print("Creating Embeddings")
-    #redis_client = redis.Redis(host='localhost', port=6379, db=0) #reddis connection details 
-    conn = redis.Redis(host='localhost', port=6379, password='', encoding='utf-8', decode_responses=True)
-    p = conn.pipeline(transaction=False)
-
-    SCHEMA = [
-        TextField("text"),
-        VectorField("embedding", "HNSW", {"TYPE": "FLOAT32", "DIM": 768, "DISTANCE_METRIC": "COSINE"}),
-    ]
-
-    try:
-        
-        conn.ft("docs").create_index(fields=SCHEMA, definition=IndexDefinition(prefix=["doc:"], index_type=IndexType.HASH))
-    except Exception as e:
-        print("Index already exists")
-
-    for file in uploaded_files:
-        fname=file.filename.split('.')[0].strip() 
-        readFile = open("./TextFiles/"+fname+".txt",'r',encoding="ISO-8859-1")
-    
-        print(fname)
-  
-        s=readFile.readlines()
-        lines=[]
-
-        for l in s:
-            l=l.replace("\n", " ").strip()    
-            lines.append(l)
-        ln=len(lines)
-
-        embeddings = sbert_model.encode(lines)
-
-        myDict={"text":[],"embedding":[]}
-
-
-        for i in range(len(lines)):
-            myDict["text"].append(lines[i])
-            myDict["embedding"].append(embeddings[i])
-
-        df=pd.DataFrame(myDict)
-        #df.to_csv("EXL_Embeddings.csv")
-        #print(df.head(2))
-        vector = np.array(embeddings).astype(np.float32).tobytes()
-
-        doc_hash = {
-            "text": fname,
-            "embedding": vector
-        }
-
-        res = conn.hset(name=f"doc:"+fname, mapping=doc_hash)
-        if res:
-            print('data stored in redis')
-        else:
-            print('Error in storing data in redis ')
-
-
-        
-        p.execute()
-
-        df_string = df.to_csv(index=False) #needs to convert to string before storing to reddis
-        print("Storing in Redis")
-        #res = redis_client.set(fname, df_string)	#This will save the data to redis database - 0 with name as masterdataset
-        #read_raw_data = conn.hgetall("doc:"+fname)
-        #clean_data = read_raw_data.decode('utf-8')
-        #print(read_raw_data) #printing data read from redis database - 0 with name masterdataset    
-    conn.close()
-    print("Embeddings created and stored in Redis")
 
 @app.route('/askQuestion',methods=['POST'])
 def askQuestions():
-    questions_list=[]
+    db=DB()
+    vectordb = db.getDB()
+    memory = ConversationBufferMemory(memory_key="chat_history",return_messages=True)
+    pdf_qa = ConversationalRetrievalChain.from_llm(OpenAI(temperature=0.9),vectordb.as_retriever(),memory=memory)
+    
     req_data=request.get_json()
     questions = req_data['questions']
-    questions_list.append(questions)
-    answer=embeddingsInRedis.ask(questions_list)
-    print(questions)
-    return jsonify({"Answer":answer})
+    result = pdf_qa({"question": questions})
+   
+    return jsonify({"Answer":result})
 
 
 if __name__ == '__main__':
