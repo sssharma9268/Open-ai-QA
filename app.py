@@ -1,10 +1,10 @@
 from flask import Flask,request, jsonify
 import os
 from flask_cors import CORS
-
+import glob
 import pandas as pd
 
-import pypdf
+
 from langchain.document_loaders import PyPDFDirectoryLoader
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
@@ -17,7 +17,7 @@ app = Flask(__name__)
 CORS(app)
 
 os.environ["PORT"] = "5000"
-#os.environ["OPENAI_API_KEY"] = "---old---s-k-ceIzc6Ajx1sOqoT7QMdNT3BlbkFJUvMm7y69FCylbCAT2cQG"
+os.environ["OPENAI_API_KEY"] = "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"
 
 
 @app.route('/')
@@ -33,11 +33,11 @@ def upload():
         
     processFiles(uploaded_files)
     
-    #print("Files Uploaded")
-    #files=glob.glob('*.pdf')
-    #print(files)
-    #for filename in files:
-        #os.unlink(filename)
+    print("Files Uploaded")
+    files=glob.glob('./MyDrive/*.pdf')
+    print(files)
+    for filename in files:
+        os.unlink(filename)
    
     return jsonify({"success":True})
 
