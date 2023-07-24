@@ -16,8 +16,8 @@ from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddi
 app = Flask(__name__)
 CORS(app)
 
-os.environ["PORT"] = "5000"
-os.environ["OPENAI_API_KEY"] = "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"
+#os.environ["PORT"] = "5000"
+#os.environ["OPENAI_API_KEY"] = "old-key-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"
 
 
 @app.route('/')
