@@ -16,8 +16,8 @@ from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddi
 app = Flask(__name__)
 CORS(app)
 
-#os.environ["PORT"] = "5000"
-#os.environ["OPENAI_API_KEY"] = "old-key-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"
+os.environ["PORT"] = "5000"
+#os.environ["OPENAI_API_KEY"] = "old-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"
 
 
 @app.route('/')
@@ -57,7 +57,7 @@ def processFiles(uploaded_files):
 def askQuestions():
     vectordb = vectorDB
     memory = ConversationBufferMemory(memory_key="chat_history",return_messages=True)
-    pdf_qa = ConversationalRetrievalChain.from_llm(OpenAI(temperature=0),vectordb.as_retriever(),memory=memory)
+    pdf_qa = ConversationalRetrievalChain.from_llm(OpenAI(temperature=0),chain_type="stuff",retriever=vectordb.as_retriever(),memory=memory)
     
     req_data=request.get_json()
     questions = req_data['questions']
