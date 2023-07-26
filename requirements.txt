@@ -10,3 +10,4 @@ flask_cors==3.0.10
 unstructured==0.7.10
 langchain
 chromadb
+pypdf
