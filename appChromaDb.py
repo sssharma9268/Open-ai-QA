@@ -8,18 +8,16 @@ import pandas as pd
 from langchain.document_loaders import PyPDFDirectoryLoader
 from langchain.embeddings import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
-from langchain.vectorstores import FAISS
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
 from langchain.llms import OpenAI
 from langchain.embeddings.sentence_transformer import SentenceTransformerEmbeddings
-from  langchain.text_splitter import CharacterTextSplitter
 
 app = Flask(__name__)
 CORS(app)
 
 os.environ["PORT"] = "5000"
-os.environ["OPENAI_API_KEY"] = "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"
+#os.environ["OPENAI_API_KEY"] = "old-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"
 
 
 @app.route('/')
@@ -45,13 +43,11 @@ def upload():
 
 def processFiles(uploaded_files):
     loader = PyPDFDirectoryLoader("./MyDrive/")
-    documents=loader.load()
-    text_splitter =  CharacterTextSplitter(chunk_size=1000, chunk_overlap = 10)
-    docs = text_splitter.split_documents(documents)
+    docs = loader.load()
     embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
     #embeddings=OpenAIEmbeddings()
     global vectorDB
-    vectorDB = FAISS.from_documents(docs,embedding_function)
+    vectorDB = Chroma.from_documents(docs,embedding_function)
  
     print("Embeddings stored in vectorDB")
   

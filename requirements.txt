@@ -11,3 +11,4 @@ unstructured==0.7.10
 langchain
 chromadb
 pypdf
+faiss-cpu==1.7.4
