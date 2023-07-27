@@ -19,7 +19,7 @@ app = Flask(__name__)
 CORS(app)
 
 os.environ["PORT"] = "5000"
-os.environ["OPENAI_API_KEY"] = "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"
+#os.environ["OPENAI_API_KEY"] = "old-key-s-k-jg5SuDakYIZqJL6hZJzhT3BlbkFJFI5HPJhNdWyOu2GCvarN"
 
 
 @app.route('/')
